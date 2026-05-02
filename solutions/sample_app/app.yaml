@@ -1,0 +1,6 @@
+command: ["streamlit", "run", "app.py"]
+env:
+  - name: "DATABRICKS_WAREHOUSE_ID"
+    value: ""  # Replace with your warehouse ID before deploying — e.g. "abcd1234"
+  - name: "STREAMLIT_GATHER_USAGE_STATS"
+    value: "false"
