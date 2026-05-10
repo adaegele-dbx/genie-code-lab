@@ -183,3 +183,21 @@ in the trace.
 
 If it doesn't trigger, force it:
 > *"Use the @anomaly-triage skill on the last 3 days of anomalies."*
+
+## Part 6 — MCP server (Genie space)
+
+After registering the Energy Operations Genie space as a Managed Genie MCP
+server in Settings → MCP Servers, issue:
+
+> *"Use the Energy Operations Genie space to find the top 3 sites by
+> `kwh_per_sqft` over the last 14 days, and for each one, tell me its
+> business unit and `deviation_from_baseline_pct` for that period."*
+
+Watch for a tool call to **Energy Operations Genie Space** in the agent
+trace. The fact that `kwh_per_sqft` and `deviation_from_baseline_pct`
+exist only as SQL Expressions inside the space (not as columns in any
+underlying table) is your evidence the MCP did the work.
+
+Stretch — mix MCP and direct SQL:
+> *"For those top-3 sites, also show me the count of warning rows in
+> `@meter_readings` for the same period."*

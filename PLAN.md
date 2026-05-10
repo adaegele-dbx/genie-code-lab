@@ -3,7 +3,7 @@
 > Status: design / pre-implementation
 > Date: 2026-05-02
 > Target environment: Databricks Free Edition
-> Target duration: 45–50 minutes
+> Target duration: ~55 minutes
 
 ---
 
@@ -47,6 +47,7 @@ Attendees do **not** need prior exposure to Genie Code, agentic AI, Spark Declar
 | Two notebooks for instruction diff: `top_consumers_baseline`, `top_consumers_with_instructions` | `/Users/<me>/` | Part 4 |
 | `.assistant_instructions.md` user instructions file | `/Users/<me>/` | Part 4 |
 | `.assistant/skills/anomaly-triage/SKILL.md` | `/Users/<me>/.assistant/skills/` | Part 5 |
+| Managed Genie MCP server registration pointing at the **Energy Operations** space | Genie Code Settings → MCP Servers | Part 6 |
 
 ---
 
@@ -191,6 +192,22 @@ Show how the same prompt produces different results once Genie Code knows your t
 ### Part 5 — Custom Skill (6 min)
 Show the Skill mechanism — narrowly scoped, auto-triggered.
 
+### Part 6 — MCP server (5 min)
+Show the third customization mechanism: registering an MCP server. Use the
+Managed Genie MCP server type to expose the **Energy Operations** Genie
+space (built in Part 3b) as a callable tool. Then issue a prompt that
+exercises the SQL Expressions defined in the space (`kwh_per_sqft`,
+`deviation_from_baseline_pct`) — those are not raw columns, so a correct
+answer is strong evidence Genie Code routed through the MCP.
+
+UI flow: Genie Code panel → gear icon → MCP Servers tab → + → Genie Space
+→ pick "Energy Operations" → Save. MCPs are limited to 20 tools across all
+servers; one Genie space = one tool.
+
+Demo prompt: *"Use the Energy Operations Genie space to find the top 3
+sites by `kwh_per_sqft` over the last 14 days, and for each one, tell me
+its business unit and `deviation_from_baseline_pct` for that period."*
+
 1. Create the directory & file: `/Users/<me>/.assistant/skills/anomaly-triage/SKILL.md`
 2. Paste the skill content (provided in lab text and `solutions/sample_skill/SKILL.md`):
    ```markdown
@@ -285,7 +302,7 @@ The lab is "done" when:
 3. The **`solutions/sample_pipeline.py`** reference produces a `daily_site_consumption` table with `anomaly_flag = true` rows when run end-to-end.
 4. The **`solutions/sample_app/`** reference deploys cleanly on Free Edition Apps and renders the anomaly list.
 5. **`solutions/sample_skill/SKILL.md`** triggers when the prompt *"Investigate yesterday's energy anomalies"* is given to Genie Code in Agent mode (verified by the "Used skill" indicator).
-6. **A dry-run of the full lab** — Antony or a test attendee runs the entire `lab_notebook.py` start-to-finish with Genie Code in Agent mode, hits all checkpoints, and finishes in 50 min ± 5 min.
+6. **A dry-run of the full lab** — Antony or a test attendee runs the entire `lab_notebook.py` start-to-finish with Genie Code in Agent mode, hits all checkpoints, and finishes in 55 min ± 5 min.
 7. **README.md** matches the structural pattern of the existing `ai-bi-dashboards-and-genie/README.md`.
 8. **No reference to fictitious Genie Code features** — every slash command, capability, and UI element mentioned in the notebook exists in the live Databricks docs as of 2026-05.
 
@@ -295,7 +312,7 @@ The lab is "done" when:
 
 - **"Improve what you built" sub-section** (`/optimize`, `/doc`, "make it incremental") — cut after dry-run testing showed no time for it within the 50-minute budget. Keep these slash commands in mind for the wrap-up "what to try on your own" list.
 - **AI/BI dashboard creation** — covered by the sibling lab; including it here would dilute focus.
-- **MLflow / model serving with Genie Code** — too much surface area for 50 min; mentioned only in the wrap-up.
+- **MLflow / model serving with Genie Code** — too much surface area for the time budget; mentioned only in the wrap-up.
 - **Workspace-level instructions** (`.assistant_workspace_instructions.md`) — Free Edition is single-user; user-level instructions are sufficient for the demo.
 - **CI/CD with DABs around the pipeline/app** — that's the `lakeflow-jobs-and-ci-cd` lab's job.
 - **Scaffolding more than one Skill** — one is enough to convey the mechanism.

@@ -2,7 +2,7 @@
 
 # MAGIC %md
 # MAGIC # Hands-On with Genie Code
-# MAGIC ### A 45-50 minute lab
+# MAGIC ### A ~55-minute lab
 # MAGIC
 # MAGIC ---
 # MAGIC
@@ -24,6 +24,7 @@
 # MAGIC | **Part 3c** | Have Genie Code create and deploy a **Databricks App** (Streamlit) | ~8 min |
 # MAGIC | **Part 4** | Customize Genie Code with **custom instructions** — diff two saved notebooks | ~6 min |
 # MAGIC | **Part 5** | Customize Genie Code with a **Skill** | ~6 min |
+# MAGIC | **Part 6** | Customize Genie Code with an **MCP server** — register the Genie space and call it | ~5 min |
 # MAGIC | **Wrap-up** | Recap and what to try next | ~2 min |
 # MAGIC
 # MAGIC > **Tip:** Each part is self-contained. If one runs long, skip ahead and
@@ -569,7 +570,7 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC In this part you'll see how a small markdown file changes Genie Code's
 # MAGIC output style for every prompt you give it from then on.
 # MAGIC
-# MAGIC ### 5a. Run a baseline prompt — save the output to a notebook
+# MAGIC ### 4a. Run a baseline prompt — save the output to a notebook
 # MAGIC
 # MAGIC We'll save the baseline output to a notebook so you have something
 # MAGIC concrete to diff against later.
@@ -588,7 +589,7 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC `pyspark.sql.functions`, whether it uses CTEs vs. subqueries, etc.
 # MAGIC We're going to compare.
 # MAGIC
-# MAGIC ### 5b. Add custom instructions
+# MAGIC ### 4b. Add custom instructions
 # MAGIC
 # MAGIC 1. Click the **gear icon** at the top of the Genie Code panel.
 # MAGIC 2. Under **User instructions**, click **Add instructions file**.
@@ -599,7 +600,7 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC    titled `# My Genie Code instructions`).
 # MAGIC 4. Paste it into your `.assistant_instructions.md`. Save.
 # MAGIC
-# MAGIC ### 5c. Re-run the prompt — save to a second notebook
+# MAGIC ### 4c. Re-run the prompt — save to a second notebook
 # MAGIC
 # MAGIC Open a **+ New chat** in the Genie Code panel (so the previous run
 # MAGIC doesn't anchor the response), then paste:
@@ -610,7 +611,7 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC > workspace home folder named `top_consumers_with_instructions` so I
 # MAGIC > can compare it with the baseline. Don't run anything."*
 # MAGIC
-# MAGIC ### 5d. Diff the two notebooks
+# MAGIC ### 4d. Diff the two notebooks
 # MAGIC
 # MAGIC Open `top_consumers_baseline` and `top_consumers_with_instructions`
 # MAGIC side by side. You should see, in the second one:
@@ -640,7 +641,7 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC In this part you'll create a small "anomaly triage" skill and watch
 # MAGIC Agent mode pick it up.
 # MAGIC
-# MAGIC ### 6a. Create the skill folder
+# MAGIC ### 5a. Create the skill folder
 # MAGIC
 # MAGIC In the workspace file browser, navigate to your home folder
 # MAGIC (`/Users/<your-email>`) and create the path:
@@ -653,13 +654,13 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC start with a dot may be hidden by default in the file browser; toggle
 # MAGIC **Show hidden** if you don't see it after creating.
 # MAGIC
-# MAGIC ### 6b. Paste the skill content
+# MAGIC ### 5b. Paste the skill content
 # MAGIC
 # MAGIC Open `solutions/sample_skill/SKILL.md` in this Git folder and copy its
 # MAGIC entire contents (including the YAML frontmatter at the top). Paste into
 # MAGIC the new `SKILL.md` file. Save.
 # MAGIC
-# MAGIC ### 6c. Trigger the skill by intent
+# MAGIC ### 5c. Trigger the skill by intent
 # MAGIC
 # MAGIC Open a **new thread** in the Genie Code panel. Make sure Agent mode is
 # MAGIC still on. Paste:
@@ -677,7 +678,7 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC 4. Cross-reference meter health
 # MAGIC 5. Produce a structured markdown report
 # MAGIC
-# MAGIC ### 6d. (Stretch) Force the skill explicitly
+# MAGIC ### 5d. (Stretch) Force the skill explicitly
 # MAGIC
 # MAGIC If the auto-trigger didn't fire, you can `@`-mention the skill:
 # MAGIC
@@ -694,17 +695,83 @@ print(f"Lab will use: {catalog}.{schema}")
 
 # MAGIC %md
 # MAGIC ---
+# MAGIC ## Part 6 — Customize Genie Code with an MCP server (5 min)
+# MAGIC
+# MAGIC Instructions tell Genie Code *how* to write code. Skills tell it *what
+# MAGIC process to follow*. **MCP servers** give it access to *new tools and
+# MAGIC data sources* — things outside the workspace, or specialized
+# MAGIC interfaces (like a tuned Genie space) that should be the canonical
+# MAGIC way to answer certain questions.
+# MAGIC
+# MAGIC In this part you'll register the **Energy Operations** Genie space you
+# MAGIC built in Part 3b as a **Managed Genie MCP server**, then issue a
+# MAGIC question that Genie Code should route through that MCP rather than
+# MAGIC answering with raw SQL of its own.
+# MAGIC
+# MAGIC ### 6a. Register the Genie space as an MCP server
+# MAGIC
+# MAGIC 1. Open the Genie Code panel (still outside this notebook).
+# MAGIC 2. Click the **gear icon** at the top of the panel.
+# MAGIC 3. Open the **MCP Servers** tab.
+# MAGIC 4. Click the **+** button to add a server.
+# MAGIC 5. Server type: **Genie Space** (a Databricks-managed MCP).
+# MAGIC 6. Pick the **Energy Operations** space you created in Part 3b.
+# MAGIC 7. Click **Save**.
+# MAGIC
+# MAGIC The MCP is immediately available — no restart needed. Genie Code's
+# MAGIC overall MCP-tool budget is capped at 20 across all servers; one Genie
+# MAGIC space counts as one tool.
+# MAGIC
+# MAGIC > **Why a Genie space MCP and not just SQL?** Your Energy Operations
+# MAGIC > space already has tuned descriptions, join relationships, and SQL
+# MAGIC > Expressions like `kwh_per_sqft` and `deviation_from_baseline_pct`.
+# MAGIC > Routing through the MCP means Genie Code answers using *those* —
+# MAGIC > faithful to your team's defined semantics — instead of re-deriving
+# MAGIC > the math each time.
+# MAGIC
+# MAGIC ### 6b. Issue a query that triggers the MCP
+# MAGIC
+# MAGIC Open a **+ New chat** in the Genie Code panel (Agent mode on). Paste:
+# MAGIC
+# MAGIC > *"Use the Energy Operations Genie space to find the top 3 sites by
+# MAGIC > `kwh_per_sqft` over the last 14 days, and for each one, tell me its
+# MAGIC > business unit and `deviation_from_baseline_pct` for that period."*
+# MAGIC
+# MAGIC Watch the agent's trace. You should see a tool call to the
+# MAGIC **Energy Operations Genie Space** MCP — usually surfaced as a step
+# MAGIC labeled *"Calling MCP server: Energy Operations"* or similar. The
+# MAGIC answer is composed from the MCP's response rather than from a SQL
+# MAGIC query Genie Code wrote on its own.
+# MAGIC
+# MAGIC > **Tip:** Both `kwh_per_sqft` and `deviation_from_baseline_pct` are
+# MAGIC > SQL Expressions defined in the Genie space — they don't exist as
+# MAGIC > columns in any underlying table. If Genie Code answers correctly,
+# MAGIC > that's strong evidence the MCP did the work.
+# MAGIC
+# MAGIC > **Stretch:** ask a follow-up that mixes MCP and direct-SQL context:
+# MAGIC > *"For those top-3 sites, also show me the count of warning rows in
+# MAGIC > `@meter_readings` for the same period."* — Genie Code should
+# MAGIC > re-use the MCP results for site identity and run direct SQL for the
+# MAGIC > warning counts.
+# MAGIC
+# MAGIC ✅ **Part 6 checkpoint:** Genie space registered as an MCP server,
+# MAGIC and you've seen Genie Code call it.
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ---
 # MAGIC ## Wrap-up (2 min)
 # MAGIC
-# MAGIC In ~50 minutes you used Genie Code to:
+# MAGIC In ~55 minutes you used Genie Code to:
 # MAGIC
 # MAGIC - **Explore** an unfamiliar dataset with Agent-mode EDA
 # MAGIC - **Build & run** a Lakeflow Spark Declarative Pipeline
 # MAGIC - **Stand up** a Genie space for natural-language Q&A
 # MAGIC - **Deploy** a Databricks App
-# MAGIC - **Improve** the code with `/optimize`, `/doc`, and chat
 # MAGIC - **Customize** Genie Code's defaults with custom instructions
 # MAGIC - **Encode a workflow** as a reusable Skill
+# MAGIC - **Extend Genie Code's reach** by registering the Genie space as an MCP server
 # MAGIC
 # MAGIC ### What to try on your own
 # MAGIC
@@ -717,6 +784,7 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC | Workspace-level instructions | `Workspace/.assistant_workspace_instructions.md` (admin) |
 # MAGIC | Workspace-level skills | `Workspace/.assistant/skills/<name>/SKILL.md` (admin) |
 # MAGIC | The `databricks-solutions/ai-dev-kit` repo | Curated Genie Code patterns from Field Engineering |
+# MAGIC | **Other MCP server types** (Vector Search, Unity Catalog Functions, Databricks SQL, GitHub) | Settings → MCP Servers — same flow as Part 6 |
 # MAGIC
 # MAGIC ### References
 # MAGIC
@@ -724,6 +792,7 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC - [Use Genie Code](https://docs.databricks.com/aws/en/genie-code/use-genie-code)
 # MAGIC - [Custom instructions](https://docs.databricks.com/aws/en/genie-code/instructions)
 # MAGIC - [Agent skills](https://docs.databricks.com/aws/en/genie-code/skills)
+# MAGIC - [Connect Genie Code to MCP servers](https://docs.databricks.com/aws/en/genie-code/mcp)
 # MAGIC - [Slash command reference](https://docs.databricks.com/aws/en/notebooks/code-assistant)
 # MAGIC
 # MAGIC Thanks for coming! Questions?

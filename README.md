@@ -1,6 +1,6 @@
 # Hands-On with Genie Code
 
-A 45-50 minute hands-on lab for learning **Genie Code** — Databricks' agentic
+A ~55-minute hands-on lab for learning **Genie Code** — Databricks' agentic
 AI assistant — by using it to build a working analytics stack on top of an
 IoT energy meter dataset.
 
@@ -15,9 +15,10 @@ By the end of this lab you will have used Genie Code to:
 - **Stand up a Genie space** over the gold table for natural-language Q&A
 - **Deploy a Databricks App** (Streamlit) that lists anomalous sites with
   a date filter
-- **Customize Genie Code** with both `.assistant_instructions.md` (custom
-  instructions) and a `SKILL.md` agent skill — and see the before/after
-  difference on the same prompt
+- **Customize Genie Code** three ways: with `.assistant_instructions.md`
+  (custom instructions), a `SKILL.md` agent skill, and a Managed Genie MCP
+  server pointed at the space you just built — see how each one changes
+  what Genie Code can do
 
 The scenario throughout: you're on the energy operations team of an
 industrial company that owns 10 sites across the US.
@@ -101,9 +102,10 @@ genie-code/
 | **Part 3c** | Have Genie Code create and deploy a Databricks App (Streamlit) | ~8 min |
 | **Part 4** | Customize Genie Code with custom instructions — diff two saved notebooks | ~6 min |
 | **Part 5** | Customize Genie Code with a Skill — auto-triggered workflow | ~6 min |
+| **Part 6** | Customize Genie Code with an MCP server — register the Genie space and call it | ~5 min |
 | **Wrap-up** | Recap and what to try on your own | ~2 min |
 
-**Total: ~50 minutes**
+**Total: ~55 minutes**
 
 ## Data Model
 
