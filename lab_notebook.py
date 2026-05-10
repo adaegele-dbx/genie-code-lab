@@ -657,8 +657,7 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC 7. Click **Save**.
 # MAGIC
 # MAGIC The MCP is immediately available — no restart needed. Genie Code's
-# MAGIC overall MCP-tool budget is capped at 20 across all servers; one Genie
-# MAGIC space counts as one tool.
+# MAGIC overall MCP-tool budget is capped at 20 across all servers.
 # MAGIC
 # MAGIC > **Why a Genie space MCP and not just SQL?** Your Energy Operations
 # MAGIC > space already has tuned descriptions, join relationships, and SQL
