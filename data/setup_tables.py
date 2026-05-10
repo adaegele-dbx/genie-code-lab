@@ -19,17 +19,12 @@
 
 # COMMAND ----------
 
-# Catalog/schema resolution:
-#   1. If the parent notebook (lab_notebook.py) set `c.catalog` via spark.conf,
-#      use that — this is the normal path when %run-ing from the lab notebook.
-#   2. Otherwise fall back to a local widget so this notebook can also be run
-#      standalone (default catalog: "workspace").
-try:
-    catalog = spark.conf.get("c.catalog")
-except Exception:
-    dbutils.widgets.text("catalog", "workspace", "Catalog Name")
-    catalog = dbutils.widgets.get("catalog")
-
+# Catalog comes from the `catalog` widget. When this notebook is %run from
+# lab_notebook.py the widget is already declared with the user's chosen value;
+# when this notebook is run standalone the line below creates it with the
+# "workspace" default.
+dbutils.widgets.text("catalog", "workspace", "Catalog Name")
+catalog = dbutils.widgets.get("catalog")
 schema = "genie_code_lab"
 print(f"Using catalog: {catalog}, schema: {schema}")
 

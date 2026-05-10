@@ -87,8 +87,6 @@
 dbutils.widgets.text("catalog", "workspace", "Catalog Name")
 catalog = dbutils.widgets.get("catalog")
 schema = "genie_code_lab"
-spark.conf.set("c.catalog", catalog)
-spark.conf.set("c.schema", schema)
 print(f"Lab will use: {catalog}.{schema}")
 
 # COMMAND ----------
@@ -97,15 +95,15 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC > 📝 **If you change the catalog from `workspace` to something else,** all
 # MAGIC > Genie Code prompts later in this lab that mention `workspace.genie_code_lab`
 # MAGIC > should be edited before you paste them — substitute your catalog name.
-# MAGIC > The executable SQL cells in this notebook already pick up the widget
-# MAGIC > value via `${c.catalog}`, so they need no edits.
+# MAGIC > The executable SQL cells in this notebook pick up the widget value
+# MAGIC > automatically via `${catalog}`, so they need no edits.
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC ### Seed the four lab tables
 # MAGIC
-# MAGIC The cell below creates `${c.catalog}.genie_code_lab` and populates it with
+# MAGIC The cell below creates `${catalog}.genie_code_lab` and populates it with
 # MAGIC four tables in a small star schema. Total seed time is typically **a few
 # MAGIC seconds**.
 # MAGIC
@@ -137,13 +135,13 @@ print(f"Lab will use: {catalog}.{schema}")
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC SELECT 'regions' AS table_name, COUNT(*) AS row_count FROM ${c.catalog}.${c.schema}.regions
+# MAGIC SELECT 'regions' AS table_name, COUNT(*) AS row_count FROM ${catalog}.genie_code_lab.regions
 # MAGIC UNION ALL
-# MAGIC SELECT 'business_units', COUNT(*) FROM ${c.catalog}.${c.schema}.business_units
+# MAGIC SELECT 'business_units', COUNT(*) FROM ${catalog}.genie_code_lab.business_units
 # MAGIC UNION ALL
-# MAGIC SELECT 'sites', COUNT(*) FROM ${c.catalog}.${c.schema}.sites
+# MAGIC SELECT 'sites', COUNT(*) FROM ${catalog}.genie_code_lab.sites
 # MAGIC UNION ALL
-# MAGIC SELECT 'meter_readings', COUNT(*) FROM ${c.catalog}.${c.schema}.meter_readings
+# MAGIC SELECT 'meter_readings', COUNT(*) FROM ${catalog}.genie_code_lab.meter_readings
 
 # COMMAND ----------
 
@@ -389,7 +387,7 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC   COUNT(DISTINCT site_id)                          AS sites_covered,
 # MAGIC   MIN(reading_date)                                AS first_date,
 # MAGIC   MAX(reading_date)                                AS last_date
-# MAGIC FROM ${c.catalog}.${c.schema}.daily_site_consumption
+# MAGIC FROM ${catalog}.genie_code_lab.daily_site_consumption
 
 # COMMAND ----------
 
