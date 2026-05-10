@@ -44,6 +44,25 @@
 # MAGIC - **Free Edition limit:** 1 active Databricks App. If you have an old app
 # MAGIC   from another lab, delete it before Part 3c.
 # MAGIC
+# MAGIC > ⚠️ **Free Edition quota:** Free Edition workspaces have a small daily
+# MAGIC > compute quota that the SDP pipeline run (Part 3a), the Genie space
+# MAGIC > queries, and the deployed app all consume. **It is likely that you will
+# MAGIC > run out of quota** before the end of the lab, especially if you re-run
+# MAGIC > the pipeline several times. If everything stops responding mid-lab,
+# MAGIC > that's almost certainly why — pick up the rest after quota resets
+# MAGIC > (typically the next day).
+# MAGIC
+# MAGIC > 🛑 **Important — run Genie Code conversations OUTSIDE this notebook.**
+# MAGIC > Throughout the lab, every Genie Code prompt should be entered in a
+# MAGIC > Genie Code thread that is **not anchored to `lab_notebook.py`**. The
+# MAGIC > simplest way: open the Genie Code panel from somewhere else (the
+# MAGIC > workspace home page, a new untitled notebook, or the SQL editor) and
+# MAGIC > keep this notebook open only for reading instructions and running the
+# MAGIC > setup/verify cells. If you run conversations from inside this notebook,
+# MAGIC > Agent mode will sometimes add cells *to this notebook itself* when
+# MAGIC > performing tasks like EDA — making the lab harder to follow on a
+# MAGIC > re-run.
+# MAGIC
 # MAGIC > Run each cell with `Shift + Enter` and read the markdown between them —
 # MAGIC > the lab instructions live in the markdown.
 
@@ -51,9 +70,42 @@
 
 # MAGIC %md
 # MAGIC ---
-# MAGIC ## Setup — Seed the energy data
+# MAGIC ## Setup — Configure & seed the data
 # MAGIC
-# MAGIC The cell below creates `workspace.genie_code_lab` and populates it with
+# MAGIC ### Catalog selection
+# MAGIC
+# MAGIC By default the lab seeds and reads from the **`workspace`** catalog, which
+# MAGIC works on every Databricks Free Edition workspace. If you're running in a
+# MAGIC fuller workspace where the `workspace` catalog isn't a good choice (or
+# MAGIC where you want to keep lab data isolated), set the `catalog` widget at
+# MAGIC the top of this notebook to your preferred catalog name.
+# MAGIC
+# MAGIC Run the cell below once to declare the widget. The default is `workspace`.
+
+# COMMAND ----------
+
+dbutils.widgets.text("catalog", "workspace", "Catalog Name")
+catalog = dbutils.widgets.get("catalog")
+schema = "genie_code_lab"
+spark.conf.set("c.catalog", catalog)
+spark.conf.set("c.schema", schema)
+print(f"Lab will use: {catalog}.{schema}")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC > 📝 **If you change the catalog from `workspace` to something else,** all
+# MAGIC > Genie Code prompts later in this lab that mention `workspace.genie_code_lab`
+# MAGIC > should be edited before you paste them — substitute your catalog name.
+# MAGIC > The executable SQL cells in this notebook already pick up the widget
+# MAGIC > value via `${c.catalog}`, so they need no edits.
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ### Seed the four lab tables
+# MAGIC
+# MAGIC The cell below creates `${c.catalog}.genie_code_lab` and populates it with
 # MAGIC four tables in a small star schema. Total seed time is typically **a few
 # MAGIC seconds**.
 # MAGIC
@@ -85,13 +137,13 @@
 # COMMAND ----------
 
 # MAGIC %sql
-# MAGIC SELECT 'regions' AS table_name, COUNT(*) AS row_count FROM workspace.genie_code_lab.regions
+# MAGIC SELECT 'regions' AS table_name, COUNT(*) AS row_count FROM ${c.catalog}.${c.schema}.regions
 # MAGIC UNION ALL
-# MAGIC SELECT 'business_units', COUNT(*) FROM workspace.genie_code_lab.business_units
+# MAGIC SELECT 'business_units', COUNT(*) FROM ${c.catalog}.${c.schema}.business_units
 # MAGIC UNION ALL
-# MAGIC SELECT 'sites', COUNT(*) FROM workspace.genie_code_lab.sites
+# MAGIC SELECT 'sites', COUNT(*) FROM ${c.catalog}.${c.schema}.sites
 # MAGIC UNION ALL
-# MAGIC SELECT 'meter_readings', COUNT(*) FROM workspace.genie_code_lab.meter_readings
+# MAGIC SELECT 'meter_readings', COUNT(*) FROM ${c.catalog}.${c.schema}.meter_readings
 
 # COMMAND ----------
 
@@ -119,46 +171,40 @@
 # MAGIC ## Part 1 — Genie Code 101 (4 min)
 # MAGIC
 # MAGIC Before going autonomous, let's get a feel for the basic surface area.
-# MAGIC Try each of the following — they're all quick.
+# MAGIC Remember: open your Genie Code thread from **outside** this notebook
+# MAGIC (workspace home page works well) so Agent mode doesn't add cells here.
 # MAGIC
-# MAGIC ### 1a. Chat with notebook context
+# MAGIC ### 1a. Agent mode vs. Chat mode
 # MAGIC
-# MAGIC In the Genie Code panel, ask:
+# MAGIC At the bottom of the Genie Code panel there's a mode toggle.
 # MAGIC
-# MAGIC > *"What is this notebook for?"*
+# MAGIC | Mode | What it does | When to use |
+# MAGIC |------|--------------|-------------|
+# MAGIC | **Chat** | Answers questions and writes code on demand. Doesn't run code. | Quick lookups, "explain this," "write me a function." |
+# MAGIC | **Agent** | Plans multi-step tasks, runs code, reads outputs, iterates. | Anything that takes more than one step — EDA, building pipelines, creating apps. |
 # MAGIC
-# MAGIC The current notebook is auto-attached as context — Genie Code can read
-# MAGIC the markdown and code cells.
+# MAGIC Flip to **Chat** mode and ask:
+# MAGIC
+# MAGIC > *"What's the difference between Agent mode and Chat mode in Genie Code?"*
+# MAGIC
+# MAGIC Then flip back to **Agent** mode — that's where you'll stay for the
+# MAGIC rest of the lab.
 # MAGIC
 # MAGIC ### 1b. `@`-reference a table
 # MAGIC
 # MAGIC In the chat box, type `@` and start typing `meter_readings`. Genie Code
-# MAGIC will autocomplete table names from Unity Catalog.  Pick `meter_readings`,
+# MAGIC will autocomplete table names from Unity Catalog. Pick `meter_readings`,
 # MAGIC then ask:
 # MAGIC
 # MAGIC > *"How many rows are in `@meter_readings` and what's the date range?"*
 # MAGIC
-# MAGIC ### 1c. Inline prompt with `Cmd+I` / `Ctrl+I`
+# MAGIC The `@` syntax also works for notebooks, files, Genie spaces, and (later
+# MAGIC in the lab) skills.
 # MAGIC
-# MAGIC Click into the empty cell below, then press **`Cmd+I`** (Mac) or
-# MAGIC **`Ctrl+I`** (Windows). A prompt box appears inside the cell. Type:
-# MAGIC
-# MAGIC > *"Show the schema of all four tables in workspace.genie_code_lab as
-# MAGIC > one combined SQL output."*
-# MAGIC
-# MAGIC Press `Enter` to generate, then accept the suggestion to fill the cell.
-
-# COMMAND ----------
-
-# Try the inline `Cmd+I` / `Ctrl+I` prompt here.
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ### 1d. Slash commands
+# MAGIC ### 1c. Slash commands
 # MAGIC
 # MAGIC In the Genie Code chat box, type `/` to open the slash-command menu.
-# MAGIC The full set of commands is documented in the
+# MAGIC The full set is documented in the
 # MAGIC [Genie Code docs](https://docs.databricks.com/aws/en/notebooks/code-assistant);
 # MAGIC try a few now:
 # MAGIC
@@ -166,27 +212,40 @@
 # MAGIC |---------|-------------|
 # MAGIC | `/findTables` | `/findTables energy consumption` |
 # MAGIC | `/findQueries` | `/findQueries top consumers` |
-# MAGIC | `/explain` | Click into the SQL cell from 1c, then run `/explain` |
-# MAGIC | `/prettify` | Run on any cell that has working but ugly code |
+# MAGIC | `/explain` | Open an existing notebook with a SQL cell, then run `/explain` |
 # MAGIC
-# MAGIC ### 1e. Autocomplete
+# MAGIC ### 1d. Provide feedback
 # MAGIC
-# MAGIC Click into the empty Python cell below and start typing:
+# MAGIC Every Genie Code response has feedback affordances — they're how
+# MAGIC Databricks improves the model and how you flag a regression.
 # MAGIC
-# MAGIC ```python
-# MAGIC df = spark.table("workspace.genie_code_lab.
-# MAGIC ```
+# MAGIC On the response from 1b or 1c:
 # MAGIC
-# MAGIC You should see Genie Code propose the rest of the line. Press **`Tab`** to
-# MAGIC accept. Try a few more lines — autocomplete kicks in continuously as you type.
+# MAGIC 1. Click the **👍 thumbs-up** if the response was useful — optional, but
+# MAGIC    valued.
+# MAGIC 2. Click the **👎 thumbs-down** if it was wrong or unhelpful. A short
+# MAGIC    free-text box appears — say briefly *why* (e.g., "wrong table,"
+# MAGIC    "missed the date filter"). The team reads these.
+# MAGIC 3. From the response's overflow menu (the `⋯`) you can also **Report a
+# MAGIC    bug** — use this when something is broken in a way that goes beyond
+# MAGIC    "the answer was wrong" (UI freeze, crash, security issue, etc.).
 # MAGIC
-# MAGIC ✅ **Part 1 checkpoint:** you've used chat, `@`-references, inline prompts,
-# MAGIC slash commands, and autocomplete. Move on.
-
-# COMMAND ----------
-
-# Try autocomplete here. Start typing:
-#   df = spark.table("workspace.genie_code_lab.
+# MAGIC ### 1e. Start a new conversation
+# MAGIC
+# MAGIC Genie Code threads accumulate context, which is usually helpful but
+# MAGIC sometimes anchors it to the wrong thing. When you want a clean slate:
+# MAGIC
+# MAGIC - Click the **+ New chat** button at the top of the Genie Code panel
+# MAGIC   (also reachable via the history sidebar)
+# MAGIC - The old thread is preserved in history — you can come back to it
+# MAGIC
+# MAGIC You'll use this several times later in the lab — especially in Part 5
+# MAGIC when comparing Genie Code's output before and after adding custom
+# MAGIC instructions.
+# MAGIC
+# MAGIC ✅ **Part 1 checkpoint:** you've experienced both modes, used `@` and
+# MAGIC `/` commands, given feedback on a response, and know how to start a
+# MAGIC fresh thread. Move on.
 
 # COMMAND ----------
 
@@ -247,49 +306,79 @@
 # MAGIC **Goal:** A `daily_site_consumption` table with one row per (site, day)
 # MAGIC and an `anomaly_flag` column.
 # MAGIC
-# MAGIC #### Step 1 — Have Genie Code generate the pipeline source
+# MAGIC In this part you'll have Genie Code do **everything** — write the
+# MAGIC pipeline source, create the pipeline resource in the workspace, dry-run
+# MAGIC it, and then do a full run. You won't click around in the Pipelines UI
+# MAGIC yourself.
 # MAGIC
-# MAGIC In the Genie Code chat panel, paste:
+# MAGIC > Reminder: if you set the catalog widget at the top of this notebook to
+# MAGIC > something other than `workspace`, edit the catalog name in each prompt
+# MAGIC > before you paste it.
 # MAGIC
-# MAGIC > *"In a new file at `pipeline/energy_pipeline.py`, write a Lakeflow
-# MAGIC > Spark Declarative Pipeline that:*
+# MAGIC #### Step 1 — Have Genie Code create the pipeline
+# MAGIC
+# MAGIC In the Genie Code chat panel (Agent mode, opened from outside this
+# MAGIC notebook), paste:
+# MAGIC
+# MAGIC > *"Create a Lakeflow Spark Declarative Pipeline named **Energy Anomaly
+# MAGIC > Pipeline** in this workspace. It should:*
 # MAGIC >
-# MAGIC > 1. *Reads `@meter_readings` as a silver table, dropping rows where
+# MAGIC > 1. *Read `@meter_readings` as a silver table, dropping rows where
 # MAGIC >    `status = 'error'`.*
-# MAGIC > 2. *Joins to `@sites`, `@regions`, and `@business_units` for site,
+# MAGIC > 2. *Join to `@sites`, `@regions`, and `@business_units` for site,
 # MAGIC >    region, and business unit metadata.*
-# MAGIC > 3. *Produces a daily per-site gold table called
+# MAGIC > 3. *Produce a daily per-site gold table called
 # MAGIC >    `daily_site_consumption` with columns: `site_id`, `site_type`,
 # MAGIC >    `business_unit_id`, `business_unit_name`, `region_id`, `region_name`,
 # MAGIC >    `reading_date`, `total_kwh`, `peak_kw`, `avg_voltage`, `warning_count`.*
-# MAGIC > 4. *Adds an `anomaly_flag` column that is `true` when the day's
+# MAGIC > 4. *Add an `anomaly_flag` column that is `true` when the day's
 # MAGIC >    `total_kwh` is more than 2 standard deviations above that site's
 # MAGIC >    30-day mean.*
 # MAGIC >
-# MAGIC > *Use `dlt` decorators and PySpark. Target catalog `workspace`, schema
-# MAGIC > `genie_code_lab`."*
+# MAGIC > *Use `dlt` decorators and PySpark. Place the source file at
+# MAGIC > `pipeline/energy_pipeline.py` in the current Git folder. Target
+# MAGIC > catalog `workspace`, schema `genie_code_lab`. Use Serverless compute
+# MAGIC > and configure the pipeline to point at the source file you just
+# MAGIC > created. Do not run it yet."*
 # MAGIC
-# MAGIC Watch Agent mode plan, write the file, and validate it. The result
-# MAGIC should be a `pipeline/energy_pipeline.py` file in this Git folder.
+# MAGIC Agent mode should: (a) write `pipeline/energy_pipeline.py`, (b) create
+# MAGIC the pipeline resource and link it to the source file, and (c) report
+# MAGIC back with the pipeline URL or name. **It should not run the pipeline
+# MAGIC yet** — that's the next step.
 # MAGIC
-# MAGIC #### Step 2 — Create the pipeline
+# MAGIC #### Step 2 — Ask Genie Code to dry-run the pipeline
 # MAGIC
-# MAGIC 1. In the left sidebar, click **New** → **ETL Pipeline**.
-# MAGIC 2. Name it: `Energy Anomaly Pipeline`.
-# MAGIC 3. **Source code:** point at `pipeline/energy_pipeline.py` in this Git folder.
-# MAGIC 4. **Destination:** catalog `workspace`, schema `genie_code_lab`.
-# MAGIC 5. Use **Serverless** compute.
-# MAGIC 6. Click **Create**.
+# MAGIC A dry run (also called *validate*) compiles the pipeline graph,
+# MAGIC type-checks the references, and resolves table dependencies without
+# MAGIC actually moving data. It's how you catch broken DAGs in a few seconds
+# MAGIC instead of waiting for a full run to fail.
 # MAGIC
-# MAGIC #### Step 3 — Run it
+# MAGIC Continue the same Genie Code thread:
 # MAGIC
-# MAGIC Click **Start** in the pipeline editor. Cold start can take 30-60 seconds
-# MAGIC on Free Edition; the run itself should be quick.
+# MAGIC > *"Now dry-run (validate) the Energy Anomaly Pipeline and report any
+# MAGIC > errors or warnings. Don't proceed to a full run."*
+# MAGIC
+# MAGIC If validation fails, ask Genie Code to fix the errors and re-validate.
+# MAGIC Repeat until you get a clean validation. Typical fixable issues: column
+# MAGIC name typos, missing imports, a `dlt.read` reference that points at a
+# MAGIC table that doesn't exist yet.
+# MAGIC
+# MAGIC #### Step 3 — Ask Genie Code to do a full run
+# MAGIC
+# MAGIC Once validation is clean:
+# MAGIC
+# MAGIC > *"Validation passed — run the Energy Anomaly Pipeline for real. Wait
+# MAGIC > for it to finish and tell me when the gold table is populated."*
+# MAGIC
+# MAGIC Cold start can take 30–60 seconds on Free Edition; the actual run
+# MAGIC should be quick because the dataset is small. While you wait, glance at
+# MAGIC the generated `pipeline/energy_pipeline.py` to see what Agent mode
+# MAGIC produced.
 # MAGIC
 # MAGIC #### Step 4 — Verify the gold table
 # MAGIC
-# MAGIC Once the pipeline is green, run the cell below to confirm the table
-# MAGIC exists and has anomaly rows.
+# MAGIC Once Genie Code reports the run is done, run the cell below to confirm
+# MAGIC the table exists and has anomaly rows.
 
 # COMMAND ----------
 
@@ -300,7 +389,7 @@
 # MAGIC   COUNT(DISTINCT site_id)                          AS sites_covered,
 # MAGIC   MIN(reading_date)                                AS first_date,
 # MAGIC   MAX(reading_date)                                AS last_date
-# MAGIC FROM workspace.genie_code_lab.daily_site_consumption
+# MAGIC FROM ${c.catalog}.${c.schema}.daily_site_consumption
 
 # COMMAND ----------
 
@@ -321,41 +410,83 @@
 # MAGIC %md
 # MAGIC ### Part 3b — Create a Genie space (5 min)
 # MAGIC
-# MAGIC **Goal:** A natural-language Q&A interface over the gold table.
+# MAGIC **Goal:** A natural-language Q&A interface over the gold table, with
+# MAGIC join relationships and SQL Expression measures configured — all created
+# MAGIC by Genie Code.
 # MAGIC
-# MAGIC #### Step 1 — Create the space
+# MAGIC > Reminder: if your catalog isn't `workspace`, substitute your catalog
+# MAGIC > name in each prompt before pasting.
 # MAGIC
-# MAGIC 1. In the left sidebar, click **Genie**.
-# MAGIC 2. Click **+ New** → **Genie space**.
-# MAGIC 3. Name it: `Energy Operations`.
-# MAGIC 4. Add tables:
-# MAGIC    - `workspace.genie_code_lab.daily_site_consumption`
-# MAGIC    - `workspace.genie_code_lab.sites`
-# MAGIC    - `workspace.genie_code_lab.regions`
-# MAGIC    - `workspace.genie_code_lab.business_units`
-# MAGIC 5. Click **Create**.
+# MAGIC #### Step 1 — Have Genie Code create the space
 # MAGIC
-# MAGIC #### Step 2 — Have Genie Code suggest a description
+# MAGIC In Agent mode, paste:
 # MAGIC
-# MAGIC Back in the notebook, ask Genie Code:
+# MAGIC > *"Create a new Genie space named **Energy Operations**. Include these
+# MAGIC > four tables:
+# MAGIC >
+# MAGIC > - `workspace.genie_code_lab.daily_site_consumption`
+# MAGIC > - `workspace.genie_code_lab.sites`
+# MAGIC > - `workspace.genie_code_lab.regions`
+# MAGIC > - `workspace.genie_code_lab.business_units`
+# MAGIC >
+# MAGIC > Write a one-paragraph space description focused on energy-anomaly
+# MAGIC > investigation. Mention that the `anomaly_flag` column on
+# MAGIC > `daily_site_consumption` is the canonical signal for 'unusual usage'
+# MAGIC > questions, and that the gold table already carries `business_unit_name`
+# MAGIC > and `region_name` so most grouping queries don't need joins."*
 # MAGIC
-# MAGIC > *"Suggest a one-paragraph description for a Genie space over
-# MAGIC > `@daily_site_consumption` focused on energy-anomaly investigation.
-# MAGIC > Mention the meaning of the `anomaly_flag` column and that the table
-# MAGIC > already carries `business_unit_name` and `region_name` for grouping."*
+# MAGIC When Agent mode reports back, open the space and confirm: the four
+# MAGIC tables are listed, and the description is in place.
 # MAGIC
-# MAGIC Copy the output into the **Description** field of your Genie space
-# MAGIC (top of the space's settings panel). Save.
+# MAGIC #### Step 2 — Have Genie Code add join relationships
 # MAGIC
-# MAGIC #### Step 3 — Ask three NL questions
+# MAGIC Genie spaces let you predefine how tables join so natural-language
+# MAGIC questions don't guess. Continue the same thread:
 # MAGIC
-# MAGIC In the Genie space chat box, ask:
+# MAGIC > *"In the Energy Operations Genie space, add the following join
+# MAGIC > relationships:*
+# MAGIC >
+# MAGIC > - *`sites.region_id` → `regions.region_id`*
+# MAGIC > - *`sites.business_unit_id` → `business_units.business_unit_id`*
+# MAGIC > - *`daily_site_consumption.site_id` → `sites.site_id`*
+# MAGIC > - *`daily_site_consumption.region_id` → `regions.region_id`*
+# MAGIC > - *`daily_site_consumption.business_unit_id` → `business_units.business_unit_id`"*
+# MAGIC
+# MAGIC Open the space's **Joins** tab and verify all five relationships
+# MAGIC appear.
+# MAGIC
+# MAGIC #### Step 3 — Have Genie Code add SQL Expression measures
+# MAGIC
+# MAGIC SQL Expressions are reusable computed columns/measures defined at the
+# MAGIC space level — Genie will use them whenever they're relevant to a user's
+# MAGIC question, instead of re-deriving the math each time.
+# MAGIC
+# MAGIC Continue the thread:
+# MAGIC
+# MAGIC > *"Add these SQL Expressions to the Energy Operations Genie space:*
+# MAGIC >
+# MAGIC > 1. ***kwh_per_sqft*** — *daily total_kwh normalized by site square
+# MAGIC >    footage. Defined as
+# MAGIC >    `daily_site_consumption.total_kwh / sites.square_footage`.*
+# MAGIC > 2. ***deviation_from_baseline_pct*** — *% deviation from the site's
+# MAGIC >    30-day mean. Defined as
+# MAGIC >    `(daily_site_consumption.total_kwh - daily_site_consumption.site_mean_kwh) / daily_site_consumption.site_mean_kwh * 100`.*
+# MAGIC > 3. ***is_anomaly*** — *boolean shorthand. Defined as
+# MAGIC >    `daily_site_consumption.anomaly_flag = true`.*"*
+# MAGIC
+# MAGIC Open the space's **SQL Expressions** tab and verify all three appear.
+# MAGIC
+# MAGIC #### Step 4 — Ask three NL questions
+# MAGIC
+# MAGIC Open the Energy Operations space and ask:
 # MAGIC
 # MAGIC 1. *"Which business unit had the most anomalies last week?"*
-# MAGIC 2. *"Show me the top 5 sites by total kWh in the past 14 days."*
+# MAGIC 2. *"Top 5 sites by kwh_per_sqft in the past 14 days."*  (this exercises
+# MAGIC    the SQL Expression you just added)
 # MAGIC 3. Pick a flagged site from the verify query in 3a (any row where
 # MAGIC    `anomaly_flag = true`) and ask:
-# MAGIC    *"For SITE-XXXX, what's the daily kWh trend?"*
+# MAGIC    *"For SITE-XXXX, what's the daily kWh trend and how does it compare
+# MAGIC    to its baseline?"*  (this exercises the deviation expression)
 # MAGIC
 # MAGIC Click **Show generated code** on each answer to see the SQL Genie wrote.
 # MAGIC

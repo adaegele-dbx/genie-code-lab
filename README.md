@@ -30,6 +30,21 @@ industrial company that owns 10 sites across the US.
 - Free Edition users: ensure no other Databricks App is currently running
   (Free Edition allows one)
 
+> ⚠️ **Free Edition quota:** Free Edition workspaces have a small daily
+> compute quota that the SDP pipeline run (Part 3a), Genie space queries, and
+> the deployed app all consume. **It is likely that you will run out of
+> quota** before the end of the lab, especially if you re-run the pipeline
+> several times. If everything stops responding mid-lab, that's almost
+> certainly why — pick up the rest after quota resets (typically the next
+> day).
+
+> 🛑 **Run Genie Code conversations OUTSIDE the lab notebook.** Every Genie
+> Code prompt in this lab should be entered from a thread that is not
+> anchored to `lab_notebook.py`. Open the Genie Code panel from the workspace
+> home, a fresh untitled notebook, or the SQL editor. Otherwise Agent mode
+> can add cells *into the lab notebook itself* while performing tasks like
+> EDA — making the lab harder to re-run.
+
 ## Getting Started
 
 ### 1. Clone this repo as a Git Folder in your Databricks workspace
