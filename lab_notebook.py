@@ -16,15 +16,14 @@
 # MAGIC
 # MAGIC | Step | What you'll do | Time |
 # MAGIC |------|----------------|------|
-# MAGIC | **Setup** | Seed three energy tables, open Genie Code, confirm Agent mode | ~3 min |
-# MAGIC | **Part 1** | Genie Code 101 — chat, `@`-references, `Cmd+I`, slash commands | ~4 min |
+# MAGIC | **Setup** | Pick a catalog, seed four energy tables, open Genie Code, confirm Agent mode | ~3 min |
+# MAGIC | **Part 1** | Genie Code 101 — agent vs chat, `@`, slash commands, feedback, new chats | ~4 min |
 # MAGIC | **Part 2** | Agent-mode EDA — one prompt, watch it plan and run | ~5 min |
-# MAGIC | **Part 3a** | Build & run a **Lakeflow Spark Declarative Pipeline** | ~8 min |
-# MAGIC | **Part 3b** | Create a **Genie space** over the gold table | ~5 min |
-# MAGIC | **Part 3c** | Deploy a **Databricks App** (Streamlit) showing anomalies | ~7 min |
-# MAGIC | **Part 4** | Improve what you built — `/optimize`, `/doc`, "make it incremental" | ~4 min |
-# MAGIC | **Part 5** | Customize Genie Code with **custom instructions** | ~5 min |
-# MAGIC | **Part 6** | Customize Genie Code with a **Skill** | ~6 min |
+# MAGIC | **Part 3a** | Have Genie Code create, dry-run, and run a **Lakeflow SDP** | ~9 min |
+# MAGIC | **Part 3b** | Have Genie Code create a **Genie space** with joins and SQL Expressions | ~7 min |
+# MAGIC | **Part 3c** | Have Genie Code create and deploy a **Databricks App** (Streamlit) | ~8 min |
+# MAGIC | **Part 4** | Customize Genie Code with **custom instructions** — diff two saved notebooks | ~6 min |
+# MAGIC | **Part 5** | Customize Genie Code with a **Skill** | ~6 min |
 # MAGIC | **Wrap-up** | Recap and what to try next | ~2 min |
 # MAGIC
 # MAGIC > **Tip:** Each part is self-contained. If one runs long, skip ahead and
@@ -237,7 +236,7 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC   (also reachable via the history sidebar)
 # MAGIC - The old thread is preserved in history — you can come back to it
 # MAGIC
-# MAGIC You'll use this several times later in the lab — especially in Part 5
+# MAGIC You'll use this several times later in the lab — especially in Part 4
 # MAGIC when comparing Genie Code's output before and after adding custom
 # MAGIC instructions.
 # MAGIC
@@ -282,7 +281,7 @@ print(f"Lab will use: {catalog}.{schema}")
 
 # MAGIC %md
 # MAGIC ---
-# MAGIC ## Part 3 — Build with Agent mode (20 min)
+# MAGIC ## Part 3 — Build with Agent mode (~24 min)
 # MAGIC
 # MAGIC This is the heart of the lab. You'll build three artifacts back-to-back,
 # MAGIC each with a single Agent-mode prompt:
@@ -299,7 +298,7 @@ print(f"Lab will use: {catalog}.{schema}")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Part 3a — Build & run the SDP pipeline (8 min)
+# MAGIC ### Part 3a — Build & run the SDP pipeline (9 min)
 # MAGIC
 # MAGIC **Goal:** A `daily_site_consumption` table with one row per (site, day)
 # MAGIC and an `anomaly_flag` column.
@@ -406,7 +405,7 @@ print(f"Lab will use: {catalog}.{schema}")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Part 3b — Create a Genie space (5 min)
+# MAGIC ### Part 3b — Create a Genie space (7 min)
 # MAGIC
 # MAGIC **Goal:** A natural-language Q&A interface over the gold table, with
 # MAGIC join relationships and SQL Expression measures configured — all created
@@ -468,7 +467,7 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC >    `daily_site_consumption.total_kwh / sites.square_footage`.*
 # MAGIC > 2. ***deviation_from_baseline_pct*** — *% deviation from the site's
 # MAGIC >    30-day mean. Defined as
-# MAGIC >    `(daily_site_consumption.total_kwh - daily_site_consumption.site_mean_kwh) / daily_site_consumption.site_mean_kwh * 100`.*
+# MAGIC >    `(daily_site_consumption.total_kwh - AVG(daily_site_consumption.total_kwh) OVER (PARTITION BY daily_site_consumption.site_id)) / AVG(daily_site_consumption.total_kwh) OVER (PARTITION BY daily_site_consumption.site_id) * 100`.*
 # MAGIC > 3. ***is_anomaly*** — *boolean shorthand. Defined as
 # MAGIC >    `daily_site_consumption.anomaly_flag = true`.*"*
 # MAGIC
@@ -498,63 +497,64 @@ print(f"Lab will use: {catalog}.{schema}")
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ### Part 3c — Deploy a Databricks App (7 min)
+# MAGIC ### Part 3c — Have Genie Code build & deploy a Databricks App (8 min)
 # MAGIC
 # MAGIC **Goal:** A 1-page Streamlit app that lists anomalous sites with a
-# MAGIC date-range filter. Free Edition supports one running app at a time.
+# MAGIC date-range filter. Free Edition supports one running app at a time —
+# MAGIC make sure no other app is currently running before you start.
 # MAGIC
-# MAGIC #### Step 1 — Create the app from the Streamlit template
+# MAGIC In this part Genie Code does **everything**: writes `app.py`, `app.yaml`,
+# MAGIC `requirements.txt`, creates the app resource in the workspace, and
+# MAGIC deploys it. You won't click around in the Apps UI.
 # MAGIC
-# MAGIC 1. In the left sidebar, click **Compute** → **Apps** → **Create app**.
-# MAGIC 2. Pick the **Streamlit** template.
-# MAGIC 3. Name it: `energy-anomaly-viewer`.
-# MAGIC 4. Click **Create**.
-# MAGIC 5. Once the app is provisioned, click **Edit code** to open the source
-# MAGIC    files in the workspace file editor.
+# MAGIC > Reminder: if your catalog isn't `workspace`, substitute your catalog
+# MAGIC > name in the prompt before pasting.
 # MAGIC
-# MAGIC #### Step 2 — Have Genie Code rewrite `app.py`
+# MAGIC #### Step 1 — One prompt to create and deploy the app
 # MAGIC
-# MAGIC With the app's `app.py` open in the file editor, open the Genie Code
-# MAGIC panel and prompt:
+# MAGIC In Agent mode, paste:
 # MAGIC
-# MAGIC > *"Replace the contents of `app.py` with a Streamlit page that queries
-# MAGIC > `workspace.genie_code_lab.daily_site_consumption` for rows where
-# MAGIC > `anomaly_flag = true`. Add a sidebar date-range filter and a sortable
-# MAGIC > table that includes site_name, site_type, business_unit_name, and
-# MAGIC > region_name. Use the databricks-sql-connector with on-behalf-of-user
-# MAGIC > auth via `databricks.sdk.core.Config`. Read `DATABRICKS_WAREHOUSE_ID`
-# MAGIC > from the environment."*
+# MAGIC > *"Create and deploy a new Databricks App named **energy-anomaly-viewer**.*
+# MAGIC >
+# MAGIC > *Source files (place them in a new folder `apps/energy-anomaly-viewer/`
+# MAGIC > in the current Git folder):*
+# MAGIC >
+# MAGIC > - *`app.yaml` — runs `streamlit run app.py`. Set the env var
+# MAGIC >   `DATABRICKS_WAREHOUSE_ID` to my Serverless SQL warehouse's ID (look
+# MAGIC >   it up — don't ask me).*
+# MAGIC > - *`requirements.txt` — `databricks-sdk`, `databricks-sql-connector`,
+# MAGIC >   `streamlit`, `pandas`.*
+# MAGIC > - *`app.py` — a Streamlit page that queries
+# MAGIC >   `workspace.genie_code_lab.daily_site_consumption` for rows where
+# MAGIC >   `anomaly_flag = true`. Show a sortable table with `site_name`,
+# MAGIC >   `site_type`, `business_unit_name`, `region_name`, `total_kwh`,
+# MAGIC >   `peak_kw`, `deviation_pct`. Add a sidebar date-range filter (default:
+# MAGIC >   last 14 days) and a site-type multiselect. Use the
+# MAGIC >   databricks-sql-connector with on-behalf-of-user auth via
+# MAGIC >   `databricks.sdk.core.Config`. Read `DATABRICKS_WAREHOUSE_ID` from the
+# MAGIC >   environment.*
+# MAGIC >
+# MAGIC > *After the source files are written, create the app resource in the
+# MAGIC > workspace, point it at `apps/energy-anomaly-viewer/`, and deploy it.
+# MAGIC > Wait for the deployment to finish and give me the URL."*
 # MAGIC
-# MAGIC #### Step 3 — Configure the warehouse env var
+# MAGIC #### Step 2 — Open the app and verify
 # MAGIC
-# MAGIC 1. Open `app.yaml` in the file editor.
-# MAGIC 2. Add (or update) the `env` block to include your warehouse ID:
+# MAGIC When Genie Code reports the deployment is done, click the URL.
 # MAGIC
-# MAGIC    ```yaml
-# MAGIC    command: ["streamlit", "run", "app.py"]
-# MAGIC    env:
-# MAGIC      - name: "DATABRICKS_WAREHOUSE_ID"
-# MAGIC        value: "<paste your warehouse ID here>"
-# MAGIC    ```
+# MAGIC - You should see a list of anomalous (site, day) rows.
+# MAGIC - Move the date range — the table should refresh.
+# MAGIC - Toggle the site-type multiselect — the table should filter.
 # MAGIC
-# MAGIC    Find your warehouse ID under **SQL warehouses** in the sidebar — copy
-# MAGIC    the ID from the URL or the warehouse details panel.
-# MAGIC
-# MAGIC #### Step 4 — Deploy and open
-# MAGIC
-# MAGIC 1. Save both files.
-# MAGIC 2. From the app page, click **Deploy** (this may take ~30-60 s).
-# MAGIC 3. Click the app URL once it's marked "Running".
-# MAGIC 4. Verify you see the anomaly list and that the date filter changes the
-# MAGIC    rows.
-# MAGIC
-# MAGIC > **Stretch:** ask Genie Code:
+# MAGIC > **Stretch:** continue the same Genie Code thread:
 # MAGIC > *"Add a bar chart above the table showing the count of anomalies per
-# MAGIC > day in the selected date range."*
+# MAGIC > day in the selected date range. Redeploy."*
 # MAGIC
-# MAGIC > **Stuck?** Copy the contents of `solutions/sample_app/` (`app.py`,
-# MAGIC > `app.yaml`, `requirements.txt`) into your app's source files,
-# MAGIC > replacing the warehouse ID placeholder. Re-deploy.
+# MAGIC > **Stuck?** If the app failed to deploy or won't render, fall back to
+# MAGIC > the reference files in `solutions/sample_app/`. Create the app
+# MAGIC > manually (Compute → Apps → Create app → Streamlit template), copy
+# MAGIC > those three files into the app's source, fill in your warehouse ID
+# MAGIC > in `app.yaml`, and redeploy.
 # MAGIC
 # MAGIC ✅ **Part 3 checkpoint:** pipeline runs, Genie space answers questions,
 # MAGIC app shows anomalies. You've built the analytics stack.
@@ -563,59 +563,30 @@ print(f"Lab will use: {catalog}.{schema}")
 
 # MAGIC %md
 # MAGIC ---
-# MAGIC ## Part 4 — Improve what you built (4 min)
-# MAGIC
-# MAGIC Now go back to `pipeline/energy_pipeline.py` and use Genie Code to
-# MAGIC sharpen what you have. Try each of the three:
-# MAGIC
-# MAGIC ### 4a. `/optimize` a function
-# MAGIC
-# MAGIC Click into the daily aggregation function. In the Genie Code chat box,
-# MAGIC type `/optimize` and press Enter. Review the proposed change in the diff
-# MAGIC view; **Accept** if it looks good, **Reject** otherwise.
-# MAGIC
-# MAGIC ### 4b. `/doc` to add docstrings
-# MAGIC
-# MAGIC Click into the `silver_readings` function. Run `/doc`. A docstring will
-# MAGIC be inserted in diff view; accept or reject.
-# MAGIC
-# MAGIC ### 4c. Make it incremental
-# MAGIC
-# MAGIC Ask Genie Code:
-# MAGIC
-# MAGIC > *"Make the daily_site_consumption table incremental — only reprocess
-# MAGIC > the last 7 days, not the full window. Use a streaming source if
-# MAGIC > appropriate."*
-# MAGIC
-# MAGIC The agent will rewrite the file. Re-run the pipeline to confirm it still
-# MAGIC works (it'll be faster on the second run thanks to the smaller window).
-# MAGIC
-# MAGIC ✅ **Part 4 checkpoint:** you've used three different "improve" features
-# MAGIC on code Genie Code wrote moments ago. Move on.
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ---
-# MAGIC ## Part 5 — Customize Genie Code with custom instructions (5 min)
+# MAGIC ## Part 4 — Customize Genie Code with custom instructions (6 min)
 # MAGIC
 # MAGIC Genie Code's defaults are good. Your team's defaults are better.
 # MAGIC In this part you'll see how a small markdown file changes Genie Code's
 # MAGIC output style for every prompt you give it from then on.
 # MAGIC
-# MAGIC ### 5a. Run a baseline prompt
+# MAGIC ### 5a. Run a baseline prompt — save the output to a notebook
 # MAGIC
-# MAGIC In the Genie Code chat box (open a fresh thread first — bottom-left
-# MAGIC corner of the panel, **+ New thread**), paste:
+# MAGIC We'll save the baseline output to a notebook so you have something
+# MAGIC concrete to diff against later.
+# MAGIC
+# MAGIC In the Genie Code panel (start a **+ New chat** so prior context doesn't
+# MAGIC bleed in), paste:
 # MAGIC
 # MAGIC > *"Write a small PySpark function that returns the top N sites by
 # MAGIC > total kWh for a given month, grouped by business unit. Use
-# MAGIC > `@daily_site_consumption`."*
+# MAGIC > `@daily_site_consumption`. Save the function to a new notebook in my
+# MAGIC > workspace home folder named `top_consumers_baseline` so I can refer
+# MAGIC > to it later. Don't run anything."*
 # MAGIC
-# MAGIC Read what it produces. Note: variable names, comment style, whether it
-# MAGIC uses type hints, whether it aliases `pyspark.sql.functions`, whether it
-# MAGIC uses CTEs vs. subqueries, etc. **Don't run it yet.** We're going to
-# MAGIC compare.
+# MAGIC Open the resulting `top_consumers_baseline` notebook. Note: variable
+# MAGIC names, comment style, whether it uses type hints, whether it aliases
+# MAGIC `pyspark.sql.functions`, whether it uses CTEs vs. subqueries, etc.
+# MAGIC We're going to compare.
 # MAGIC
 # MAGIC ### 5b. Add custom instructions
 # MAGIC
@@ -628,19 +599,21 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC    titled `# My Genie Code instructions`).
 # MAGIC 4. Paste it into your `.assistant_instructions.md`. Save.
 # MAGIC
-# MAGIC ### 5c. Re-run the same prompt
+# MAGIC ### 5c. Re-run the prompt — save to a second notebook
 # MAGIC
-# MAGIC Open a **new thread** in the Genie Code panel (so the previous run
-# MAGIC doesn't anchor the response). Paste the **same baseline prompt** from
-# MAGIC 5a:
+# MAGIC Open a **+ New chat** in the Genie Code panel (so the previous run
+# MAGIC doesn't anchor the response), then paste:
 # MAGIC
 # MAGIC > *"Write a small PySpark function that returns the top N sites by
 # MAGIC > total kWh for a given month, grouped by business unit. Use
-# MAGIC > `@daily_site_consumption`."*
+# MAGIC > `@daily_site_consumption`. Save the function to a new notebook in my
+# MAGIC > workspace home folder named `top_consumers_with_instructions` so I
+# MAGIC > can compare it with the baseline. Don't run anything."*
 # MAGIC
-# MAGIC ### 5d. Diff the outputs
+# MAGIC ### 5d. Diff the two notebooks
 # MAGIC
-# MAGIC Compare the two responses. You should see:
+# MAGIC Open `top_consumers_baseline` and `top_consumers_with_instructions`
+# MAGIC side by side. You should see, in the second one:
 # MAGIC
 # MAGIC - Type hints on every function signature
 # MAGIC - `pyspark.sql.functions` aliased as `F`
@@ -653,13 +626,14 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC > a `.assistant_workspace_instructions.md` in the workspace root for
 # MAGIC > team-wide rules — the same mechanism, applied to everyone.
 # MAGIC
-# MAGIC ✅ **Part 5 checkpoint:** before/after comparison, instructions saved.
+# MAGIC ✅ **Part 4 checkpoint:** two notebooks side by side showing the
+# MAGIC before/after.
 
 # COMMAND ----------
 
 # MAGIC %md
 # MAGIC ---
-# MAGIC ## Part 6 — Customize Genie Code with a Skill (6 min)
+# MAGIC ## Part 5 — Customize Genie Code with a Skill (6 min)
 # MAGIC
 # MAGIC Custom instructions are global. **Skills** are narrow, reusable
 # MAGIC workflows that Agent mode auto-loads when the user's request matches.
@@ -714,7 +688,7 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC > Together they let your team encode workflows once and have every team
 # MAGIC > member benefit, automatically.
 # MAGIC
-# MAGIC ✅ **Part 6 checkpoint:** skill triggered, structured report produced.
+# MAGIC ✅ **Part 5 checkpoint:** skill triggered, structured report produced.
 
 # COMMAND ----------
 

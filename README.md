@@ -93,18 +93,17 @@ genie-code/
 
 | Part | Topic | Time |
 |------|-------|------|
-| **Setup** | Seed 4 tables, open Genie Code, confirm Agent mode | ~3 min |
-| **Part 1** | Genie Code 101 — chat, `@`-references, `Cmd+I`, slash commands, autocomplete | ~4 min |
+| **Setup** | Pick a catalog, seed 4 tables, open Genie Code, confirm Agent mode | ~3 min |
+| **Part 1** | Genie Code 101 — agent vs chat, `@`, slash commands, feedback, new chats | ~4 min |
 | **Part 2** | Agent-mode EDA — one prompt, observe planning and iteration | ~5 min |
-| **Part 3a** | Build & run a Lakeflow Spark Declarative Pipeline | ~8 min |
-| **Part 3b** | Create a Genie space and ask 3 NL questions | ~5 min |
-| **Part 3c** | Generate and deploy a Databricks App (Streamlit) | ~7 min |
-| **Part 4** | Improve what you built — `/optimize`, `/doc`, "make it incremental" | ~4 min |
-| **Part 5** | Customize Genie Code with custom instructions — same prompt before vs. after | ~5 min |
-| **Part 6** | Customize Genie Code with a Skill — auto-triggered workflow | ~6 min |
+| **Part 3a** | Have Genie Code create, dry-run, and run a Lakeflow SDP | ~9 min |
+| **Part 3b** | Have Genie Code create a Genie space with joins and SQL Expressions | ~7 min |
+| **Part 3c** | Have Genie Code create and deploy a Databricks App (Streamlit) | ~8 min |
+| **Part 4** | Customize Genie Code with custom instructions — diff two saved notebooks | ~6 min |
+| **Part 5** | Customize Genie Code with a Skill — auto-triggered workflow | ~6 min |
 | **Wrap-up** | Recap and what to try on your own | ~2 min |
 
-**Total: ~49 minutes**
+**Total: ~50 minutes**
 
 ## Data Model
 

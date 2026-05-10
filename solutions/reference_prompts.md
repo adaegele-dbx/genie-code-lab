@@ -112,7 +112,7 @@ Add SQL Expression measures:
 >    `daily_site_consumption.total_kwh / sites.square_footage`.
 > 2. **deviation_from_baseline_pct** — % deviation from the site's
 >    30-day mean. Defined as
->    `(daily_site_consumption.total_kwh - daily_site_consumption.site_mean_kwh) / daily_site_consumption.site_mean_kwh * 100`.
+>    `(daily_site_consumption.total_kwh - AVG(daily_site_consumption.total_kwh) OVER (PARTITION BY daily_site_consumption.site_id)) / AVG(daily_site_consumption.total_kwh) OVER (PARTITION BY daily_site_consumption.site_id) * 100`.
 > 3. **is_anomaly** — boolean shorthand. Defined as
 >    `daily_site_consumption.anomaly_flag = true`."*
 
@@ -124,40 +124,55 @@ Test questions:
 
 ## Part 3c — Streamlit app
 
-> *"Replace the contents of `app.py` with a Streamlit page that queries
-> `workspace.genie_code_lab.daily_site_consumption` for rows where
-> `anomaly_flag = true`. Add a sidebar date-range filter and a sortable
-> table that includes site_name, site_type, business_unit_name, and
-> region_name. Use the databricks-sql-connector with on-behalf-of-user
-> auth via `databricks.sdk.core.Config`. Read `DATABRICKS_WAREHOUSE_ID`
-> from the environment."*
+One-shot create + deploy:
+> *"Create and deploy a new Databricks App named **energy-anomaly-viewer**.
+> Source files (place them in a new folder `apps/energy-anomaly-viewer/`
+> in the current Git folder):
+>
+> - `app.yaml` — runs `streamlit run app.py`. Set the env var
+>   `DATABRICKS_WAREHOUSE_ID` to my Serverless SQL warehouse's ID (look
+>   it up — don't ask me).
+> - `requirements.txt` — `databricks-sdk`, `databricks-sql-connector`,
+>   `streamlit`, `pandas`.
+> - `app.py` — a Streamlit page that queries
+>   `workspace.genie_code_lab.daily_site_consumption` for rows where
+>   `anomaly_flag = true`. Show a sortable table with `site_name`,
+>   `site_type`, `business_unit_name`, `region_name`, `total_kwh`,
+>   `peak_kw`, `deviation_pct`. Add a sidebar date-range filter (default:
+>   last 14 days) and a site-type multiselect. Use the
+>   databricks-sql-connector with on-behalf-of-user auth via
+>   `databricks.sdk.core.Config`. Read `DATABRICKS_WAREHOUSE_ID` from the
+>   environment.
+>
+> After the source files are written, create the app resource in the
+> workspace, point it at `apps/energy-anomaly-viewer/`, and deploy it.
+> Wait for the deployment to finish and give me the URL."*
 
 Stretch:
 > *"Add a bar chart above the table showing the count of anomalies per
-> day in the selected date range."*
+> day in the selected date range. Redeploy."*
 
-## Part 4 — Improve what you built
+## Part 4 — Custom instructions
 
-On the pipeline file:
-> Use `/optimize` on the daily aggregation function.
-> Use `/doc` to add a docstring to the silver_readings table.
-> Then chat:
-> *"Make the daily_site_consumption table incremental — only reprocess
-> the last 7 days, not the full window. Use a streaming source and
-> AutoCDC if appropriate."*
-
-## Part 5 — Custom instructions
-
-Baseline (run this first, before adding instructions):
+Baseline — saves the result to a new notebook:
 > *"Write a small PySpark function that returns the top N sites by total
 > kWh for a given month, grouped by business unit. Use
-> `@daily_site_consumption`."*
+> `@daily_site_consumption`. Save the function to a new notebook in my
+> workspace home folder named `top_consumers_baseline` so I can refer to
+> it later. Don't run anything."*
 
 After pasting `solutions/sample_assistant_instructions.md` into your
-`.assistant_instructions.md` file, run the **same** prompt again and
-diff the outputs.
+`.assistant_instructions.md` file, start a new chat and run:
 
-## Part 6 — Custom skill
+> *"Write a small PySpark function that returns the top N sites by total
+> kWh for a given month, grouped by business unit. Use
+> `@daily_site_consumption`. Save the function to a new notebook in my
+> workspace home folder named `top_consumers_with_instructions` so I can
+> compare it with the baseline. Don't run anything."*
+
+Open the two notebooks side by side and diff them.
+
+## Part 5 — Custom skill
 
 Trigger by intent (no `@`-mention):
 > *"Investigate yesterday's energy anomalies and tell me what to look at."*
