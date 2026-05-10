@@ -1,6 +1,6 @@
 # Hands-On with Genie Code
 
-A ~55-minute hands-on lab for learning **Genie Code** — Databricks' agentic
+A ~47-minute hands-on lab (with optional bonus tasks) for learning **Genie Code** — Databricks' agentic
 AI assistant — by using it to build a working analytics stack on top of an
 IoT energy meter dataset.
 
@@ -12,13 +12,15 @@ By the end of this lab you will have used Genie Code to:
   `regions`, `business_units`, `sites`, `meter_readings`
 - **Build & run a Lakeflow Spark Declarative Pipeline** that produces a
   daily per-site gold table with an anomaly flag
-- **Stand up a Genie space** over the gold table for natural-language Q&A
-- **Deploy a Databricks App** (Streamlit) that lists anomalous sites with
-  a date filter
+- **Stand up a Genie space** over the gold table, complete with join
+  relationships and SQL Expression measures
 - **Customize Genie Code** three ways: with `.assistant_instructions.md`
   (custom instructions), a `SKILL.md` agent skill, and a Managed Genie MCP
   server pointed at the space you just built — see how each one changes
   what Genie Code can do
+- **(Bonus, on your own)** Five copy-paste prompts to build a Databricks
+  App, an AI/BI dashboard, a scheduled Lakeflow Job, a Unity Catalog SQL
+  function, or a forecasting model on the same data
 
 The scenario throughout: you're on the energy operations team of an
 industrial company that owns 10 sites across the US.
@@ -99,13 +101,13 @@ genie-code/
 | **Part 2** | Agent-mode EDA — one prompt, observe planning and iteration | ~5 min |
 | **Part 3a** | Have Genie Code create, dry-run, and run a Lakeflow SDP | ~9 min |
 | **Part 3b** | Have Genie Code create a Genie space with joins and SQL Expressions | ~7 min |
-| **Part 3c** | Have Genie Code create and deploy a Databricks App (Streamlit) | ~8 min |
 | **Part 4** | Customize Genie Code with custom instructions — diff two saved notebooks | ~6 min |
 | **Part 5** | Customize Genie Code with a Skill — auto-triggered workflow | ~6 min |
 | **Part 6** | Customize Genie Code with an MCP server — register the Genie space and call it | ~5 min |
+| **Bonus** | A menu of 5 additional resources to build with Genie Code on your own time | optional |
 | **Wrap-up** | Recap and what to try on your own | ~2 min |
 
-**Total: ~55 minutes**
+**Total: ~47 minutes** (plus optional Bonus tasks).
 
 ## Data Model
 

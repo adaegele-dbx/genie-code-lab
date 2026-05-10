@@ -3,7 +3,7 @@
 > Status: design / pre-implementation
 > Date: 2026-05-02
 > Target environment: Databricks Free Edition
-> Target duration: ~55 minutes
+> Target duration: ~47 minutes core (plus optional Bonus section attendees can pick up later)
 
 ---
 
@@ -42,8 +42,7 @@ Attendees do **not** need prior exposure to Genie Code, agentic AI, Spark Declar
 |---|---|---|
 | 4 UC tables: `regions`, `business_units`, `sites`, `meter_readings` | `workspace.genie_code_lab` | Setup |
 | Lakeflow SDP pipeline producing `daily_site_consumption` (with 2σ-anomaly flag) | `workspace.genie_code_lab` | Part 3a |
-| Genie space over the gold table | Workspace > Genie | Part 3b |
-| Databricks App (Streamlit) listing anomalous sites with date filter | Workspace > Apps | Part 3c |
+| Genie space over the gold table (with joins and SQL Expressions) | Workspace > Genie | Part 3b |
 | Two notebooks for instruction diff: `top_consumers_baseline`, `top_consumers_with_instructions` | `/Users/<me>/` | Part 4 |
 | `.assistant_instructions.md` user instructions file | `/Users/<me>/` | Part 4 |
 | `.assistant/skills/anomaly-triage/SKILL.md` | `/Users/<me>/.assistant/skills/` | Part 5 |
@@ -172,15 +171,6 @@ One prompt, observe the agent.
 
 **Solutions fallback:** `solutions/sample_genie_instructions.md`.
 
-### Part 3c — Have Genie Code build & deploy a Databricks App (8 min)
-**Goal:** A 1-page Streamlit app — created and deployed end-to-end by one Genie Code prompt.
-
-Attendee flow: a single prompt asks Genie Code to write `app.yaml`, `requirements.txt`, and `app.py` into `apps/energy-anomaly-viewer/`, look up the user's warehouse ID, create the app resource, and deploy it. App reads `daily_site_consumption` filtered to `anomaly_flag = true`, with sidebar date-range and site-type filters.
-
-**Stretch:** ask Genie Code to add a daily anomaly count bar chart and redeploy.
-
-**Solutions fallback:** `solutions/sample_app/{app.py, app.yaml, requirements.txt}` — used only if the agent's deploy fails.
-
 ### Part 4 — Custom instructions (6 min)
 Show how the same prompt produces different results once Genie Code knows your team's preferences. **The diff is persisted by saving each output to its own notebook** so attendees can compare side by side after the lab.
 
@@ -207,6 +197,18 @@ servers; one Genie space = one tool.
 Demo prompt: *"Use the Energy Operations Genie space to find the top 3
 sites by `kwh_per_sqft` over the last 14 days, and for each one, tell me
 its business unit and `deviation_from_baseline_pct` for that period."*
+
+### Bonus — Build more on your own (optional)
+Closes the lab with five copy-paste prompts attendees can run on their own
+to extend the work. Resource menu:
+
+1. **Databricks App** (Streamlit) — anomaly viewer. Reference fallback in `solutions/sample_app/`.
+2. **AI/BI Dashboard** — four widgets (KPI counter, daily bar, stacked bar by BU×site_type, top-10 table) over the gold table.
+3. **Lakeflow Job** — schedules the SDP from Part 3a daily at 06:00 UTC with failure email.
+4. **Unity Catalog Function** — `get_site_anomalies(site_id, days)` returns ranked anomalies; demonstrates encapsulating analyst logic.
+5. **Forecasting model + endpoint** — per-site daily-kWh Prophet (or equivalent), logged via MLflow, served behind an endpoint.
+
+Each item is one Agent-mode prompt. Not part of the timed lab — attendees pick whichever resonates.
 
 1. Create the directory & file: `/Users/<me>/.assistant/skills/anomaly-triage/SKILL.md`
 2. Paste the skill content (provided in lab text and `solutions/sample_skill/SKILL.md`):
@@ -254,7 +256,7 @@ genie-code/
     ├── README.md                          # "use these only as fallback"
     ├── sample_pipeline.py                 # reference SDP definition for Part 3a
     ├── sample_genie_instructions.md       # reference Genie space description + tuning for Part 3b
-    ├── sample_app/                        # reference Databricks App for Part 3c
+    ├── sample_app/                        # reference Databricks App — used by the Bonus task
     │   ├── app.yaml
     │   └── app.py
     ├── sample_assistant_instructions.md   # reference custom instructions for Part 4
@@ -284,7 +286,7 @@ genie-code/
 | Agent mode produces non-deterministic output that doesn't match what we expect | High | Lab text uses *intent-based* prompts; never says "the output should be X." Solutions folder has a known-good fallback. |
 | Genie Code Agent mode generates a pipeline that doesn't run on first try | Medium | Part 3a's dry-run step catches this before a full run — fixing the agent's own output during validation is itself a teachable moment. `solutions/sample_pipeline.py` is known-good as a last resort. |
 | Free Edition serverless cold-start delays Part 3a pipeline run by 30-60 s | Medium | Lab text warns; Part 3a is sized to absorb a 60 s wait. |
-| Streamlit app deploy fails (auth, dependencies) | Medium | `solutions/sample_app/` is known-good and copy-pasteable. Lab text guides attendee to use it if their generated app fails to deploy after one retry. |
+| Streamlit app deploy fails (auth, dependencies) — for attendees who try the Bonus App task | Low | `solutions/sample_app/` is known-good and copy-pasteable. Bonus text points attendees there if the agent's deploy fails. |
 | `.assistant/skills/` directory path differs slightly across regions/clouds | Low | Lab text references "Genie Code settings → Workspace skills" UI path as the source of truth, not the literal path. |
 | Genie space NL questions return wrong SQL on a fresh space | Medium | Solutions/sample_genie_instructions.md has a tested description and instruction set; lab tells attendee to paste this if their first 2 questions fail. |
 | Free Edition app limit (1 running) causes attendee to hit a previously-deployed app | Low | Setup checklist tells attendee to delete any other running app before starting. |
@@ -300,9 +302,9 @@ The lab is "done" when:
 1. **Setup completes in < 60 s** on a fresh Free Edition workspace from a brand-new git folder clone.
 2. **All four UC tables exist** with row counts within ~5% of targets.
 3. The **`solutions/sample_pipeline.py`** reference produces a `daily_site_consumption` table with `anomaly_flag = true` rows when run end-to-end.
-4. The **`solutions/sample_app/`** reference deploys cleanly on Free Edition Apps and renders the anomaly list.
+4. The **`solutions/sample_app/`** reference (used only by the Bonus App task) deploys cleanly on Free Edition Apps and renders the anomaly list.
 5. **`solutions/sample_skill/SKILL.md`** triggers when the prompt *"Investigate yesterday's energy anomalies"* is given to Genie Code in Agent mode (verified by the "Used skill" indicator).
-6. **A dry-run of the full lab** — Antony or a test attendee runs the entire `lab_notebook.py` start-to-finish with Genie Code in Agent mode, hits all checkpoints, and finishes in 55 min ± 5 min.
+6. **A dry-run of the full lab** — Antony or a test attendee runs the entire `lab_notebook.py` core (Setup → Part 6) start-to-finish with Genie Code in Agent mode, hits all checkpoints, and finishes in 47 min ± 5 min. Bonus tasks are not part of acceptance.
 7. **README.md** matches the structural pattern of the existing `ai-bi-dashboards-and-genie/README.md`.
 8. **No reference to fictitious Genie Code features** — every slash command, capability, and UI element mentioned in the notebook exists in the live Databricks docs as of 2026-05.
 

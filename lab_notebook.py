@@ -2,7 +2,7 @@
 
 # MAGIC %md
 # MAGIC # Hands-On with Genie Code
-# MAGIC ### A ~55-minute lab
+# MAGIC ### A ~47-minute lab
 # MAGIC
 # MAGIC ---
 # MAGIC
@@ -21,10 +21,10 @@
 # MAGIC | **Part 2** | Agent-mode EDA — one prompt, watch it plan and run | ~5 min |
 # MAGIC | **Part 3a** | Have Genie Code create, dry-run, and run a **Lakeflow SDP** | ~9 min |
 # MAGIC | **Part 3b** | Have Genie Code create a **Genie space** with joins and SQL Expressions | ~7 min |
-# MAGIC | **Part 3c** | Have Genie Code create and deploy a **Databricks App** (Streamlit) | ~8 min |
 # MAGIC | **Part 4** | Customize Genie Code with **custom instructions** — diff two saved notebooks | ~6 min |
 # MAGIC | **Part 5** | Customize Genie Code with a **Skill** | ~6 min |
 # MAGIC | **Part 6** | Customize Genie Code with an **MCP server** — register the Genie space and call it | ~5 min |
+# MAGIC | **Bonus** | A menu of additional resources to build with Genie Code on your own time | optional |
 # MAGIC | **Wrap-up** | Recap and what to try next | ~2 min |
 # MAGIC
 # MAGIC > **Tip:** Each part is self-contained. If one runs long, skip ahead and
@@ -41,8 +41,8 @@
 # MAGIC   (`Workspace` → `Create` → `Git folder`).
 # MAGIC - You have a **SQL warehouse** running (Free Edition's default 2X-Small is
 # MAGIC   plenty).
-# MAGIC - **Free Edition limit:** 1 active Databricks App. If you have an old app
-# MAGIC   from another lab, delete it before Part 3c.
+# MAGIC - **Free Edition limit:** 1 active Databricks App. Only matters if you
+# MAGIC   try the **Bonus** App task at the end — delete any old app first.
 # MAGIC
 # MAGIC > ⚠️ **Free Edition quota:** Free Edition workspaces have a small daily
 # MAGIC > compute quota that the SDP pipeline run (Part 3a), the Genie space
@@ -282,19 +282,19 @@ print(f"Lab will use: {catalog}.{schema}")
 
 # MAGIC %md
 # MAGIC ---
-# MAGIC ## Part 3 — Build with Agent mode (~24 min)
+# MAGIC ## Part 3 — Build with Agent mode (~16 min)
 # MAGIC
-# MAGIC This is the heart of the lab. You'll build three artifacts back-to-back,
+# MAGIC This is the heart of the lab. You'll build two artifacts back-to-back,
 # MAGIC each with a single Agent-mode prompt:
 # MAGIC
 # MAGIC 1. **3a — A Lakeflow Spark Declarative Pipeline** that produces a daily
 # MAGIC    per-site gold table with a 2σ anomaly flag.
 # MAGIC 2. **3b — A Genie space** over the gold table for natural-language Q&A.
-# MAGIC 3. **3c — A Databricks App** (Streamlit) that lists anomalies with a
-# MAGIC    date filter.
 # MAGIC
 # MAGIC Each sub-step has its own checkpoint — don't move on until the previous
-# MAGIC artifact ran.
+# MAGIC artifact ran. Want to also build a Databricks App, dashboard, or
+# MAGIC scheduled job? Those are in the **Bonus — On your own** section near
+# MAGIC the end of the lab.
 
 # COMMAND ----------
 
@@ -494,71 +494,9 @@ print(f"Lab will use: {catalog}.{schema}")
 # MAGIC
 # MAGIC ✅ **Part 3b checkpoint:** three questions answered, you've seen the
 # MAGIC SQL each one generated. Move on.
-
-# COMMAND ----------
-
-# MAGIC %md
-# MAGIC ### Part 3c — Have Genie Code build & deploy a Databricks App (8 min)
 # MAGIC
-# MAGIC **Goal:** A 1-page Streamlit app that lists anomalous sites with a
-# MAGIC date-range filter. Free Edition supports one running app at a time —
-# MAGIC make sure no other app is currently running before you start.
-# MAGIC
-# MAGIC In this part Genie Code does **everything**: writes `app.py`, `app.yaml`,
-# MAGIC `requirements.txt`, creates the app resource in the workspace, and
-# MAGIC deploys it. You won't click around in the Apps UI.
-# MAGIC
-# MAGIC > Reminder: if your catalog isn't `workspace`, substitute your catalog
-# MAGIC > name in the prompt before pasting.
-# MAGIC
-# MAGIC #### Step 1 — One prompt to create and deploy the app
-# MAGIC
-# MAGIC In Agent mode, paste:
-# MAGIC
-# MAGIC > *"Create and deploy a new Databricks App named **energy-anomaly-viewer**.*
-# MAGIC >
-# MAGIC > *Source files (place them in a new folder `apps/energy-anomaly-viewer/`
-# MAGIC > in the current Git folder):*
-# MAGIC >
-# MAGIC > - *`app.yaml` — runs `streamlit run app.py`. Set the env var
-# MAGIC >   `DATABRICKS_WAREHOUSE_ID` to my Serverless SQL warehouse's ID (look
-# MAGIC >   it up — don't ask me).*
-# MAGIC > - *`requirements.txt` — `databricks-sdk`, `databricks-sql-connector`,
-# MAGIC >   `streamlit`, `pandas`.*
-# MAGIC > - *`app.py` — a Streamlit page that queries
-# MAGIC >   `workspace.genie_code_lab.daily_site_consumption` for rows where
-# MAGIC >   `anomaly_flag = true`. Show a sortable table with `site_name`,
-# MAGIC >   `site_type`, `business_unit_name`, `region_name`, `total_kwh`,
-# MAGIC >   `peak_kw`, `deviation_pct`. Add a sidebar date-range filter (default:
-# MAGIC >   last 14 days) and a site-type multiselect. Use the
-# MAGIC >   databricks-sql-connector with on-behalf-of-user auth via
-# MAGIC >   `databricks.sdk.core.Config`. Read `DATABRICKS_WAREHOUSE_ID` from the
-# MAGIC >   environment.*
-# MAGIC >
-# MAGIC > *After the source files are written, create the app resource in the
-# MAGIC > workspace, point it at `apps/energy-anomaly-viewer/`, and deploy it.
-# MAGIC > Wait for the deployment to finish and give me the URL."*
-# MAGIC
-# MAGIC #### Step 2 — Open the app and verify
-# MAGIC
-# MAGIC When Genie Code reports the deployment is done, click the URL.
-# MAGIC
-# MAGIC - You should see a list of anomalous (site, day) rows.
-# MAGIC - Move the date range — the table should refresh.
-# MAGIC - Toggle the site-type multiselect — the table should filter.
-# MAGIC
-# MAGIC > **Stretch:** continue the same Genie Code thread:
-# MAGIC > *"Add a bar chart above the table showing the count of anomalies per
-# MAGIC > day in the selected date range. Redeploy."*
-# MAGIC
-# MAGIC > **Stuck?** If the app failed to deploy or won't render, fall back to
-# MAGIC > the reference files in `solutions/sample_app/`. Create the app
-# MAGIC > manually (Compute → Apps → Create app → Streamlit template), copy
-# MAGIC > those three files into the app's source, fill in your warehouse ID
-# MAGIC > in `app.yaml`, and redeploy.
-# MAGIC
-# MAGIC ✅ **Part 3 checkpoint:** pipeline runs, Genie space answers questions,
-# MAGIC app shows anomalies. You've built the analytics stack.
+# MAGIC ✅ **Part 3 checkpoint:** pipeline runs, Genie space answers
+# MAGIC questions. You've built the analytics core — customization comes next.
 
 # COMMAND ----------
 
@@ -761,17 +699,110 @@ print(f"Lab will use: {catalog}.{schema}")
 
 # MAGIC %md
 # MAGIC ---
+# MAGIC ## Bonus — Build more on your own
+# MAGIC
+# MAGIC Five other Databricks resources Genie Code can build for you on top of
+# MAGIC the same `daily_site_consumption` gold table. Pick whichever sounds
+# MAGIC interesting after the lab. Each one is a single Agent-mode prompt.
+# MAGIC
+# MAGIC > Reminder: substitute your catalog name in any prompt below if it
+# MAGIC > isn't `workspace`. Open the Genie Code panel from outside this
+# MAGIC > notebook so Agent mode doesn't write into the lab notebook.
+# MAGIC
+# MAGIC ### 1. Databricks App (Streamlit)
+# MAGIC
+# MAGIC One-page anomaly browser. Free Edition allows one running app at a
+# MAGIC time — make sure no other app is running first.
+# MAGIC
+# MAGIC > *"Create and deploy a new Databricks App named **energy-anomaly-viewer**.
+# MAGIC > Place source files in `apps/energy-anomaly-viewer/` in the current
+# MAGIC > Git folder.*
+# MAGIC >
+# MAGIC > - *`app.yaml` runs `streamlit run app.py`. Set
+# MAGIC >   `DATABRICKS_WAREHOUSE_ID` to my Serverless warehouse's ID (look it
+# MAGIC >   up — don't ask me).*
+# MAGIC > - *`requirements.txt`: databricks-sdk, databricks-sql-connector,
+# MAGIC >   streamlit, pandas.*
+# MAGIC > - *`app.py`: a Streamlit page that queries
+# MAGIC >   `workspace.genie_code_lab.daily_site_consumption` for rows where
+# MAGIC >   `anomaly_flag = true`, with a sortable table (site_name, site_type,
+# MAGIC >   business_unit_name, region_name, total_kwh, peak_kw,
+# MAGIC >   deviation_pct), a sidebar date-range filter (default last 14
+# MAGIC >   days), and a site-type multiselect. Auth via
+# MAGIC >   `databricks.sdk.core.Config` on-behalf-of-user.*
+# MAGIC >
+# MAGIC > *Then create the app resource, point it at that folder, deploy it,
+# MAGIC > wait for it to come up, and give me the URL."*
+# MAGIC
+# MAGIC Reference fallback: `solutions/sample_app/`.
+# MAGIC
+# MAGIC ### 2. AI/BI Dashboard
+# MAGIC
+# MAGIC A visual companion to the Genie space. Same data, four widgets.
+# MAGIC
+# MAGIC > *"Create a new AI/BI dashboard called **Energy Operations Overview**
+# MAGIC > backed by `workspace.genie_code_lab.daily_site_consumption`. Add four
+# MAGIC > widgets:*
+# MAGIC >
+# MAGIC > 1. *KPI counter — total anomalies in the last 7 days.*
+# MAGIC > 2. *Bar chart — daily anomaly count over the last 30 days.*
+# MAGIC > 3. *Stacked bar — anomalies by `business_unit_name` × `site_type`.*
+# MAGIC > 4. *Table — top 10 (site, day) rows by `deviation_pct`.*
+# MAGIC >
+# MAGIC > *Add a global date-range filter and publish the dashboard."*
+# MAGIC
+# MAGIC ### 3. Lakeflow Job — schedule the pipeline
+# MAGIC
+# MAGIC Wrap the SDP you built in Part 3a in a job that runs every morning.
+# MAGIC
+# MAGIC > *"Create a Lakeflow Job named **energy-anomaly-daily** that runs the
+# MAGIC > Energy Anomaly Pipeline (built in Part 3a) every day at 06:00 UTC.
+# MAGIC > Send a notification to my email on failure. Use Serverless compute."*
+# MAGIC
+# MAGIC ### 4. Unity Catalog Function
+# MAGIC
+# MAGIC Encapsulate analyst logic as a callable SQL function that anyone in the
+# MAGIC workspace can use.
+# MAGIC
+# MAGIC > *"Create a Unity Catalog SQL function
+# MAGIC > `workspace.genie_code_lab.get_site_anomalies(site_id STRING, days INT)`
+# MAGIC > that returns the rows from
+# MAGIC > `workspace.genie_code_lab.daily_site_consumption` where the given
+# MAGIC > site has `anomaly_flag = true` within the past N days, ordered by
+# MAGIC > deviation_pct descending. Add a docstring. Then run a test query
+# MAGIC > calling it for `SITE-0005` over 14 days and show me the result."*
+# MAGIC
+# MAGIC ### 5. Forecasting model + endpoint
+# MAGIC
+# MAGIC Train a per-site daily-kWh forecast and serve it.
+# MAGIC
+# MAGIC > *"Train a per-site daily-kWh forecasting model on
+# MAGIC > `workspace.genie_code_lab.daily_site_consumption`. Use Prophet (or
+# MAGIC > whichever forecasting library you think fits best). Train one model
+# MAGIC > per `site_id`, log them as a single MLflow registered model, and
+# MAGIC > deploy a serving endpoint that accepts `site_id` and `horizon_days`
+# MAGIC > and returns the forecast. Show me sample inference output for two
+# MAGIC > sites."*
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ---
 # MAGIC ## Wrap-up (2 min)
 # MAGIC
-# MAGIC In ~55 minutes you used Genie Code to:
+# MAGIC In ~47 minutes you used Genie Code to:
 # MAGIC
 # MAGIC - **Explore** an unfamiliar dataset with Agent-mode EDA
 # MAGIC - **Build & run** a Lakeflow Spark Declarative Pipeline
-# MAGIC - **Stand up** a Genie space for natural-language Q&A
-# MAGIC - **Deploy** a Databricks App
+# MAGIC - **Stand up** a Genie space with joins and SQL Expressions
 # MAGIC - **Customize** Genie Code's defaults with custom instructions
 # MAGIC - **Encode a workflow** as a reusable Skill
 # MAGIC - **Extend Genie Code's reach** by registering the Genie space as an MCP server
+# MAGIC
+# MAGIC The **Bonus** section above lists five more resources you can build on
+# MAGIC top of `daily_site_consumption` whenever you have time — App,
+# MAGIC AI/BI dashboard, scheduled Lakeflow Job, UC SQL function, and a
+# MAGIC forecasting model.
 # MAGIC
 # MAGIC ### What to try on your own
 # MAGIC

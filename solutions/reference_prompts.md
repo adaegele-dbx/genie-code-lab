@@ -122,36 +122,6 @@ Test questions:
 > 3. *"For SITE-XXXX, what's the daily kWh trend and how does it compare
 >    to its baseline?"*  (substitute an actual flagged site_id from your data)
 
-## Part 3c — Streamlit app
-
-One-shot create + deploy:
-> *"Create and deploy a new Databricks App named **energy-anomaly-viewer**.
-> Source files (place them in a new folder `apps/energy-anomaly-viewer/`
-> in the current Git folder):
->
-> - `app.yaml` — runs `streamlit run app.py`. Set the env var
->   `DATABRICKS_WAREHOUSE_ID` to my Serverless SQL warehouse's ID (look
->   it up — don't ask me).
-> - `requirements.txt` — `databricks-sdk`, `databricks-sql-connector`,
->   `streamlit`, `pandas`.
-> - `app.py` — a Streamlit page that queries
->   `workspace.genie_code_lab.daily_site_consumption` for rows where
->   `anomaly_flag = true`. Show a sortable table with `site_name`,
->   `site_type`, `business_unit_name`, `region_name`, `total_kwh`,
->   `peak_kw`, `deviation_pct`. Add a sidebar date-range filter (default:
->   last 14 days) and a site-type multiselect. Use the
->   databricks-sql-connector with on-behalf-of-user auth via
->   `databricks.sdk.core.Config`. Read `DATABRICKS_WAREHOUSE_ID` from the
->   environment.
->
-> After the source files are written, create the app resource in the
-> workspace, point it at `apps/energy-anomaly-viewer/`, and deploy it.
-> Wait for the deployment to finish and give me the URL."*
-
-Stretch:
-> *"Add a bar chart above the table showing the count of anomalies per
-> day in the selected date range. Redeploy."*
-
 ## Part 4 — Custom instructions
 
 Baseline — saves the result to a new notebook:
@@ -201,3 +171,60 @@ underlying table) is your evidence the MCP did the work.
 Stretch — mix MCP and direct SQL:
 > *"For those top-3 sites, also show me the count of warning rows in
 > `@meter_readings` for the same period."*
+
+## Bonus — Build more on your own
+
+### 1. Databricks App (Streamlit)
+> *"Create and deploy a new Databricks App named **energy-anomaly-viewer**.
+> Place source files in `apps/energy-anomaly-viewer/` in the current Git
+> folder.
+>
+> - `app.yaml` runs `streamlit run app.py`. Set `DATABRICKS_WAREHOUSE_ID`
+>   to my Serverless warehouse's ID (look it up — don't ask me).
+> - `requirements.txt`: databricks-sdk, databricks-sql-connector,
+>   streamlit, pandas.
+> - `app.py`: a Streamlit page that queries
+>   `workspace.genie_code_lab.daily_site_consumption` for rows where
+>   `anomaly_flag = true`, with a sortable table (site_name, site_type,
+>   business_unit_name, region_name, total_kwh, peak_kw, deviation_pct),
+>   a sidebar date-range filter (default last 14 days), and a site-type
+>   multiselect. Auth via `databricks.sdk.core.Config` on-behalf-of-user.
+>
+> Create the app resource, point it at that folder, deploy, and give me
+> the URL."*
+
+Reference fallback: `solutions/sample_app/`.
+
+### 2. AI/BI Dashboard
+> *"Create a new AI/BI dashboard called **Energy Operations Overview**
+> backed by `workspace.genie_code_lab.daily_site_consumption`. Add four
+> widgets:
+>
+> 1. KPI counter — total anomalies in the last 7 days.
+> 2. Bar chart — daily anomaly count over the last 30 days.
+> 3. Stacked bar — anomalies by `business_unit_name` × `site_type`.
+> 4. Table — top 10 (site, day) rows by `deviation_pct`.
+>
+> Add a global date-range filter and publish the dashboard."*
+
+### 3. Lakeflow Job — schedule the pipeline
+> *"Create a Lakeflow Job named **energy-anomaly-daily** that runs the
+> Energy Anomaly Pipeline (built in Part 3a) every day at 06:00 UTC.
+> Send a notification to my email on failure. Use Serverless compute."*
+
+### 4. Unity Catalog Function
+> *"Create a Unity Catalog SQL function
+> `workspace.genie_code_lab.get_site_anomalies(site_id STRING, days INT)`
+> that returns rows from
+> `workspace.genie_code_lab.daily_site_consumption` where the given site
+> has `anomaly_flag = true` within the past N days, ordered by
+> `deviation_pct` descending. Add a docstring. Then run a test query
+> calling it for `SITE-0005` over 14 days and show me the result."*
+
+### 5. Forecasting model + endpoint
+> *"Train a per-site daily-kWh forecasting model on
+> `workspace.genie_code_lab.daily_site_consumption`. Use Prophet (or
+> whichever forecasting library fits best). Train one model per
+> `site_id`, log them as a single MLflow registered model, and deploy a
+> serving endpoint that accepts `site_id` and `horizon_days` and returns
+> the forecast. Show me sample inference output for two sites."*
